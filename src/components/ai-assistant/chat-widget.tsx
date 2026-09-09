@@ -15,6 +15,8 @@ import ChatWindow, { MessageItem } from "./chat-window";
 import MessageInput from "./message-input";
 import ResumeDrawer, { ResumeData } from "./resume-drawer";
 
+const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+
 export interface ChatWidgetProps {
   initialQuestion?: string;
   autoOpen?: boolean;
@@ -28,6 +30,7 @@ export default function ChatWidget({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [resumeDrawerOpen, setResumeDrawerOpen] = useState(false);
+  const [backendActive, setBackendActive] = useState(false);
 
   // Data & Models State
   const [models, setModels] = useState<ModelOption[]>([]);
@@ -46,22 +49,43 @@ export default function ChatWidget({
   // Load initial model & candidate data
   useEffect(() => {
     async function loadData() {
+      const apiTarget = BACKEND_BASE ? `${BACKEND_BASE}/api` : "/api";
+      let modelsRes: any = null;
+      let resumeRes: any = null;
+
       try {
-        const [modelsRes, resumeRes] = await Promise.all([
-          fetch("/api/models").then((r) => r.json()),
-          fetch("/api/resume").then((r) => r.json()),
+        const [mRes, rRes] = await Promise.all([
+          fetch(`${apiTarget}/models`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`${apiTarget}/resume`).then((r) => (r.ok ? r.json() : null)),
         ]);
-
-        if (modelsRes?.models?.length) {
-          setModels(modelsRes.models);
-          setSelectedModel(modelsRes.models[0].id);
-        }
-
-        if (resumeRes) {
-          setCandidateResume(resumeRes);
+        if (mRes || rRes) {
+          modelsRes = mRes;
+          resumeRes = rRes;
+          if (BACKEND_BASE) setBackendActive(true);
         }
       } catch (err) {
-        console.error("Error loading AI Assistant metadata:", err);
+        console.warn("Direct backend request failed, falling back to Next.js API:", err);
+      }
+
+      // Fallback to local Next.js API routes if backend didn't respond
+      if (!modelsRes) {
+        modelsRes = await fetch("/api/models")
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+      }
+      if (!resumeRes) {
+        resumeRes = await fetch("/api/resume")
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+      }
+
+      if (modelsRes?.models?.length) {
+        setModels(modelsRes.models);
+        setSelectedModel(modelsRes.models[0].id);
+      }
+
+      if (resumeRes) {
+        setCandidateResume(resumeRes);
       }
     }
     loadData();
@@ -183,15 +207,45 @@ export default function ChatWidget({
     let accumulatedContent = "";
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: query,
-          model: selectedModel,
-          session_id: currentSessionId,
-        }),
-      });
+      let response: Response;
+      if (BACKEND_BASE) {
+        try {
+          response = await fetch(`${BACKEND_BASE}/api/chat/stream`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question: query,
+              model: selectedModel,
+              session_id: currentSessionId,
+            }),
+          });
+          if (!response.ok || !response.body) {
+            throw new Error(`Backend returned status ${response.status}`);
+          }
+          setBackendActive(true);
+        } catch (backendErr) {
+          console.warn("Backend stream failed, falling back to local API:", backendErr);
+          response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question: query,
+              model: selectedModel,
+              session_id: currentSessionId,
+            }),
+          });
+        }
+      } else {
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: query,
+            model: selectedModel,
+            session_id: currentSessionId,
+          }),
+        });
+      }
 
       if (!response.ok || !response.body) {
         throw new Error(`Server returned status ${response.status}`);
@@ -318,8 +372,9 @@ export default function ChatWidget({
                 <h3 className="text-xs font-bold text-white tracking-wide">
                   Sagar's AI Assistant
                 </h3>
-                <span className="text-[10px] bg-[#10a37f]/20 border border-[#10a37f]/30 text-[#10a37f] px-2 py-0.5 rounded-full font-medium">
-                  Groq LLM
+                <span className="text-[10px] bg-[#10a37f]/20 border border-[#10a37f]/30 text-[#10a37f] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${backendActive ? "bg-emerald-400 animate-pulse" : "bg-[#10a37f]"}`} />
+                  {backendActive ? "FastAPI Live" : "Groq LLM"}
                 </span>
               </div>
             </div>

@@ -13,14 +13,22 @@ from fastapi.responses import StreamingResponse
 from pypdf import PdfReader
 
 # Load environment variables
-env_path = Path(__file__).parent.parent / ".env"
-if env_path.exists():
-    load_dotenv(env_path)
-else:
-    load_dotenv()
+for env_candidate in [
+    Path(__file__).parent / ".env",
+    Path(__file__).parent.parent / ".env.local",
+    Path(__file__).parent.parent / ".env",
+]:
+    if env_candidate.exists():
+        load_dotenv(env_candidate)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+def get_groq_client() -> Optional[Groq]:
+    api_key = os.getenv("GROQ_API_KEY")
+    if api_key:
+        return Groq(api_key=api_key)
+    return None
+
+client = get_groq_client()
+
 
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 AVAILABLE_MODELS = [
@@ -91,10 +99,10 @@ def read_pdf(file_path: Path) -> str:
     if not file_path.exists():
         return ""
     
-    # Try PyMuPDF (fitz)
+    # Try PyMuPDF
     try:
-        import fitz
-        doc = fitz.open(file_path)
+        import pymupdf
+        doc = pymupdf.open(file_path)
         text = ""
         for page in doc:
             page_text = page.get_text("text")
@@ -188,10 +196,21 @@ def get_home():
     resume = get_or_load_resume()
     return {
         "status": "online",
+        "service": "portfolio-ai-backend",
         "mode": "dynamic_pdf_parsing",
         "candidate": resume.name,
         "email": resume.email,
         "models_available": len(AVAILABLE_MODELS)
+    }
+
+@app.get("/health")
+def health():
+    active_client = client or get_groq_client()
+    return {
+        "status": "ok",
+        "service": "portfolio-ai-backend",
+        "version": "4.0.0",
+        "groq_configured": bool(active_client)
     }
 
 @app.get("/api/models")
@@ -212,9 +231,13 @@ def update_resume(updated: Resume):
     return {"message": "Resume updated in memory", "resume": CACHED_RESUME.model_dump()}
 
 @app.post("/api/chat")
-def chat(request: ChatRequest):
-    if not client:
+async def chat(request: ChatRequest, stream: bool = False):
+    active_client = client or get_groq_client()
+    if not active_client:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured in .env")
+
+    if stream:
+        return await chat_stream(request)
 
     pdf_path = Path(__file__).parent / "latest resume.pdf"
     raw_pdf_text = read_pdf(pdf_path)
@@ -223,7 +246,7 @@ def chat(request: ChatRequest):
 
     try:
         selected_model = request.model or DEFAULT_MODEL
-        response = client.chat.completions.create(
+        response = active_client.chat.completions.create(
             model=selected_model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -238,7 +261,8 @@ def chat(request: ChatRequest):
 
 @app.post("/api/chat/stream")
 async def chat_stream(request: ChatRequest):
-    if not client:
+    active_client = client or get_groq_client()
+    if not active_client:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured in .env")
 
     pdf_path = Path(__file__).parent / "latest resume.pdf"

@@ -17,6 +17,8 @@ import {
   Cpu,
 } from "lucide-react";
 
+const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+
 export interface ResumeData {
   name: string;
   email: string;
@@ -68,11 +70,30 @@ export default function ResumeDrawer({
     try {
       const parsed = JSON.parse(jsonText);
       setSaveStatus("Saving...");
-      const res = await fetch("/api/resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
-      });
+      let res: Response;
+      if (BACKEND_BASE) {
+        try {
+          res = await fetch(`${BACKEND_BASE}/api/resume`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsed),
+          });
+          if (!res.ok) throw new Error(`Backend returned status ${res.status}`);
+        } catch (backendErr) {
+          console.warn("Backend save failed, falling back to Next.js API:", backendErr);
+          res = await fetch("/api/resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsed),
+          });
+        }
+      } else {
+        res = await fetch("/api/resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed),
+        });
+      }
       const data = await res.json();
       setSaveStatus("Saved successfully!");
       if (onResumeUpdated && data.resume) onResumeUpdated(data.resume);
