@@ -11,6 +11,7 @@ import {
   Bot,
   Sparkles,
   Layers,
+  X,
 } from "lucide-react";
 
 export interface SessionItem {
@@ -57,27 +58,51 @@ export default function Sidebar({
   onOpenResume,
   candidateName = "Sagar Bhatiya",
 }: SidebarProps) {
+  const handleItemSelect = (action: () => void) => {
+    action();
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      onToggleSidebar();
+    }
+  };
+
   return (
     <>
-      {/* Sidebar Panel */}
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-30 sm:hidden animate-in fade-in duration-200"
+          onClick={onToggleSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Panel: Responsive off-canvas drawer on mobile, collapsible panel on desktop */}
       <aside
-        className={`${
-          isOpen ? "w-64" : "w-0 md:w-14"
-        } transition-all duration-300 ease-in-out bg-[#171717] border-r border-white/10 flex flex-col h-full shrink-0 relative overflow-hidden text-zinc-300 select-none z-20`}
+        className={`
+          fixed sm:relative inset-y-0 left-0 z-40 sm:z-20
+          bg-[#171717] border-r border-white/10 flex flex-col h-full shrink-0
+          overflow-hidden text-zinc-300 select-none shadow-2xl sm:shadow-none
+          transition-all duration-300 ease-in-out
+          ${
+            isOpen
+              ? "w-72 max-w-[85vw] sm:w-64 translate-x-0"
+              : "-translate-x-full sm:translate-x-0 w-72 sm:w-14 pointer-events-none sm:pointer-events-auto"
+          }
+        `}
       >
         {/* Top Branding / Header */}
         <div className="p-3 border-b border-white/10 flex items-center justify-between min-h-[56px]">
           {isOpen ? (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f]">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f] shrink-0">
                 <Bot size={18} />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold text-white tracking-wide flex items-center gap-1">
                   AI Assistant
                   <Sparkles size={11} className="text-[#10a37f]" />
                 </span>
-                <span className="text-[10px] text-zinc-400">
+                <span className="text-[10px] text-zinc-400 truncate">
                   {candidateName} Portfolio
                 </span>
               </div>
@@ -93,22 +118,27 @@ export default function Sidebar({
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
             title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
-            {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            <span className="sm:hidden">
+              <X size={16} />
+            </span>
+            <span className="hidden sm:inline">
+              {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </span>
           </button>
         </div>
 
         {/* New Chat Button */}
         <div className="p-2.5">
           <button
-            onClick={onNewChat}
-            className="w-full bg-[#10a37f] hover:bg-[#10a37f]/90 text-white font-medium text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10a37f]/10 transition"
+            onClick={() => handleItemSelect(onNewChat)}
+            className="w-full bg-[#10a37f] hover:bg-[#10a37f]/90 text-white font-medium text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10a37f]/10 transition active:scale-[0.98]"
           >
             <Plus size={16} />
             {isOpen && <span>New Chat</span>}
           </button>
         </div>
 
-        {/* Model Selection Dropdown (Inside Sidebar when open) */}
+        {/* Model Selection Dropdown */}
         {isOpen && models.length > 0 && (
           <div className="px-3 py-2 border-b border-white/5">
             <label className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider flex items-center gap-1 mb-1">
@@ -142,8 +172,8 @@ export default function Sidebar({
             return (
               <div
                 key={session.id}
-                onClick={() => onSelectSession(session.id)}
-                className={`group flex items-center justify-between px-2.5 py-2 rounded-xl text-xs cursor-pointer transition ${
+                onClick={() => handleItemSelect(() => onSelectSession(session.id))}
+                className={`group flex items-center justify-between px-2.5 py-2.5 rounded-xl text-xs cursor-pointer transition ${
                   isActive
                     ? "bg-white/10 text-white font-medium"
                     : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
@@ -177,7 +207,7 @@ export default function Sidebar({
         {/* Bottom Actions Footer */}
         <div className="p-2 border-t border-white/10 space-y-1">
           <button
-            onClick={onOpenResume}
+            onClick={() => handleItemSelect(onOpenResume)}
             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs text-zinc-300 hover:bg-white/5 transition"
           >
             <FileText size={15} className="text-[#10a37f]" />

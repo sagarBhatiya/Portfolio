@@ -9,6 +9,7 @@ import {
   Minimize2,
   FileText,
   MessageSquare,
+  PanelLeft,
 } from "lucide-react";
 import Sidebar, { SessionItem, ModelOption } from "./sidebar";
 import ChatWindow, { MessageItem } from "./chat-window";
@@ -30,9 +31,16 @@ export default function ChatWidget({
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(autoOpen);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [resumeDrawerOpen, setResumeDrawerOpen] = useState(false);
   const [backendActive, setBackendActive] = useState(false);
+
+  // Set initial sidebar state based on screen width
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   // Data & Models State
   const [models, setModels] = useState<ModelOption[]>([]);
@@ -341,7 +349,7 @@ export default function ChatWidget({
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[200] bg-gradient-to-r from-[#10a37f] to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white p-3.5 rounded-full shadow-2xl shadow-[#10a37f]/40 flex items-center gap-2.5 transition-all duration-300 transform hover:scale-105 group font-devanagari"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[200] bg-gradient-to-r from-[#10a37f] to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white p-3 sm:p-3.5 rounded-full shadow-2xl shadow-[#10a37f]/40 flex items-center gap-2 sm:gap-2.5 transition-all duration-300 transform hover:scale-105 active:scale-95 group font-devanagari"
           title="Open AI Assistant"
         >
           <div className="relative">
@@ -358,30 +366,41 @@ export default function ChatWidget({
       {/* Main AI Assistant Modal / Drawer Container */}
       {isOpen && (
         <div
-          className={`fixed z-[250] transition-all duration-300 flex flex-col bg-[#171717] border border-white/10 rounded-2xl shadow-2xl overflow-hidden font-devanagari ${
+          className={`fixed z-[250] transition-all duration-300 flex flex-col bg-[#171717] border-white/10 shadow-2xl overflow-hidden font-devanagari ${
             isFullScreen
-              ? "inset-4 sm:inset-6"
-              : "bottom-4 right-4 w-[92vw] sm:w-[480px] md:w-[780px] h-[650px] max-h-[88vh]"
+              ? "inset-0 sm:inset-4 md:inset-6 rounded-none sm:rounded-2xl border-0 sm:border"
+              : "inset-0 sm:inset-auto sm:bottom-6 sm:right-6 w-full sm:w-[500px] md:w-[780px] h-[100dvh] sm:h-[650px] sm:max-h-[88vh] rounded-none sm:rounded-2xl border-0 sm:border"
           }`}
         >
           {/* Top Modal Navigation Header */}
-          <div className="bg-[#202123] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f]">
+          <div className="bg-[#202123] border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              {/* Sidebar / History toggle button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center shrink-0"
+                title={sidebarOpen ? "Close chat history" : "Open chat history"}
+                aria-label="Toggle chat history"
+              >
+                <PanelLeft size={17} className={sidebarOpen ? "text-[#10a37f]" : ""} />
+              </button>
+
+              <div className="w-7 h-7 rounded-lg bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f] shrink-0">
                 <Bot size={16} />
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-white tracking-wide">
-                  Sagar's AI Assistant
+
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <h3 className="text-xs font-bold text-white tracking-wide truncate">
+                  Sagar's AI
                 </h3>
-                <span className="text-[10px] bg-[#10a37f]/20 border border-[#10a37f]/30 text-[#10a37f] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-[10px] bg-[#10a37f]/20 border border-[#10a37f]/30 text-[#10a37f] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shrink-0">
                   <span className={`w-1.5 h-1.5 rounded-full ${backendActive ? "bg-emerald-400 animate-pulse" : "bg-[#10a37f]"}`} />
-                  {backendActive ? "FastAPI Live" : "Groq LLM"}
+                  <span>{backendActive ? "FastAPI Live" : "Groq LLM"}</span>
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 text-zinc-400">
+            <div className="flex items-center gap-1 text-zinc-400 shrink-0">
               <button
                 onClick={() => setResumeDrawerOpen(true)}
                 className="p-1.5 hover:text-white hover:bg-white/5 rounded-lg text-xs flex items-center gap-1 transition"
@@ -393,7 +412,7 @@ export default function ChatWidget({
 
               <button
                 onClick={() => setIsFullScreen(!isFullScreen)}
-                className="p-1.5 hover:text-white hover:bg-white/5 rounded-lg transition"
+                className="hidden sm:inline-flex p-1.5 hover:text-white hover:bg-white/5 rounded-lg transition"
                 title={isFullScreen ? "Minimize" : "Maximize"}
               >
                 {isFullScreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}

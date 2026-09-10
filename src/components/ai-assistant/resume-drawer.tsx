@@ -114,42 +114,44 @@ export default function ResumeDrawer({
       onClick={onClose}
     >
       <div
-        className="w-[540px] max-w-full h-full bg-[#171717] border-l border-white/10 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 font-devanagari"
+        className="w-full sm:w-[540px] max-w-full h-full bg-[#171717] border-l border-white/10 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 font-devanagari"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#202123]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f]">
-              <User size={20} />
+        <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between bg-[#202123]">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#10a37f]/20 border border-[#10a37f]/40 flex items-center justify-center text-[#10a37f] shrink-0">
+              <User size={18} className="sm:hidden" />
+              <User size={20} className="hidden sm:block" />
             </div>
-            <div>
-              <h2 className="text-base font-semibold text-white">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-semibold text-white truncate">
                 {resume.name || "Sagar Bhatiya"}
               </h2>
-              <div className="flex items-center gap-1.5 text-xs text-[#10a37f]">
-                <CheckCircle size={13} />
-                <span>Verified Portfolio & Resume Active</span>
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#10a37f]">
+                <CheckCircle size={12} className="shrink-0" />
+                <span className="truncate">Verified Portfolio & Resume Active</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {!isEditing ? (
               <button
-                className="flex items-center gap-1.5 bg-[#10a37f]/15 border border-[#10a37f] text-[#10a37f] px-3 py-1.5 rounded-lg text-xs hover:bg-[#10a37f]/25 transition"
+                className="flex items-center gap-1.5 bg-[#10a37f]/15 border border-[#10a37f] text-[#10a37f] px-2.5 sm:px-3 py-1.5 rounded-lg text-xs hover:bg-[#10a37f]/25 transition"
                 onClick={handleStartEdit}
                 title="Edit Profile JSON"
               >
-                <Edit3 size={14} />
-                <span>Edit Profile</span>
+                <Edit3 size={13} />
+                <span className="hidden sm:inline">Edit Profile</span>
+                <span className="sm:hidden">Edit</span>
               </button>
             ) : (
               <button
-                className="flex items-center gap-1.5 bg-[#10a37f] text-white px-3 py-1.5 rounded-lg text-xs hover:bg-[#10a37f]/90 transition"
+                className="flex items-center gap-1.5 bg-[#10a37f] text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs hover:bg-[#10a37f]/90 transition"
                 onClick={handleSaveEdit}
               >
-                <Save size={14} />
+                <Save size={13} />
                 <span>Save</span>
               </button>
             )}
@@ -159,7 +161,7 @@ export default function ResumeDrawer({
               onClick={onClose}
               title="Close drawer"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -176,7 +178,7 @@ export default function ResumeDrawer({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 text-zinc-200">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 sm:space-y-6 text-zinc-200">
           {isEditing ? (
             <div className="space-y-2">
               <label className="text-xs text-zinc-400 font-mono">
@@ -192,13 +194,13 @@ export default function ResumeDrawer({
           ) : (
             <>
               {/* Contact Info & Social Links Bar */}
-              <div className="grid grid-cols-2 gap-2 bg-white/[0.03] p-3 rounded-xl border border-white/10 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white/[0.03] p-3 rounded-xl border border-white/10 text-xs">
                 {resume.email && (
                   <a
                     href={`mailto:${resume.email}`}
-                    className="flex items-center gap-2 text-zinc-300 hover:text-[#10a37f] transition"
+                    className="flex items-center gap-2 text-zinc-300 hover:text-[#10a37f] transition min-w-0"
                   >
-                    <Mail size={15} className="text-[#10a37f]" />
+                    <Mail size={15} className="text-[#10a37f] shrink-0" />
                     <span className="truncate">{resume.email}</span>
                   </a>
                 )}
@@ -209,7 +211,7 @@ export default function ResumeDrawer({
                     rel="noreferrer"
                     className="flex items-center gap-2 text-zinc-300 hover:text-[#10a37f] transition"
                   >
-                    <Globe size={15} className="text-[#10a37f]" />
+                    <Globe size={15} className="text-[#10a37f] shrink-0" />
                     <span>LinkedIn</span>
                     <ExternalLink size={12} />
                   </a>
@@ -221,19 +223,19 @@ export default function ResumeDrawer({
                     rel="noreferrer"
                     className="flex items-center gap-2 text-zinc-300 hover:text-[#10a37f] transition"
                   >
-                    <Globe size={15} className="text-[#10a37f]" />
+                    <Globe size={15} className="text-[#10a37f] shrink-0" />
                     <span>GitHub</span>
                     <ExternalLink size={12} />
                   </a>
                 )}
                 <div className="flex items-center gap-2 text-zinc-300">
-                  <Award size={15} className="text-[#10a37f]" />
+                  <Award size={15} className="text-[#10a37f] shrink-0" />
                   <span>CGPA: 8.4 / 10</span>
                 </div>
               </div>
 
               {/* Coding Milestones Highlight Card */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div className="bg-gradient-to-br from-[#10a37f]/15 to-purple-500/10 border border-[#10a37f]/30 rounded-xl p-3 flex items-center gap-3">
                   <Trophy size={20} className="text-[#10a37f] shrink-0" />
                   <div>
