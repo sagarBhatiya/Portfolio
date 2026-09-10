@@ -15,7 +15,9 @@ import ChatWindow, { MessageItem } from "./chat-window";
 import MessageInput from "./message-input";
 import ResumeDrawer, { ResumeData } from "./resume-drawer";
 
-const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+const BACKEND_BASE = (
+  process.env.NEXT_PUBLIC_BACKEND_URL || "https://portfolio-ai-backend-prc3.onrender.com"
+).replace(/\/$/, "");
 
 export interface ChatWidgetProps {
   initialQuestion?: string;

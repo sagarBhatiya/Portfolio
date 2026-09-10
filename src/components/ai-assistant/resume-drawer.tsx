@@ -17,7 +17,9 @@ import {
   Cpu,
 } from "lucide-react";
 
-const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+const BACKEND_BASE = (
+  process.env.NEXT_PUBLIC_BACKEND_URL || "https://portfolio-ai-backend-prc3.onrender.com"
+).replace(/\/$/, "");
 
 export interface ResumeData {
   name: string;
