@@ -128,7 +128,8 @@ def read_pdf(file_path: Path) -> str:
 
 def parse_resume(resume_text: str) -> Resume:
     """Parse raw PDF resume text dynamically using Groq LLM model into structured JSON schema."""
-    if not resume_text or not client:
+    active_client = client or get_groq_client()
+    if not resume_text or not active_client:
         return Resume()
     
     system_prompt = f"""
@@ -143,7 +144,7 @@ Important rules:
 3. If a list or value has no information in the resume text, return null or an empty list.
 """
     try:
-        response = client.chat.completions.create(
+        response = active_client.chat.completions.create(
             model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -273,7 +274,7 @@ async def chat_stream(request: ChatRequest):
 
     async def event_generator():
         try:
-            stream = client.chat.completions.create(
+            stream = active_client.chat.completions.create(
                 model=selected_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
